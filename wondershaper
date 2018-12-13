@@ -14,32 +14,33 @@
 QUANTUM=6000
 BURST=15k
 COMMONOPTIONS="$COMMONOPTIONS"
-VERSION=1.4
+VERSION=1.4.dong
 
 usage()
 {
 cat << EOF
-USAGE: $0 [-hcs] [-a <adapter>] [-d <rate>] [-u <rate>]
+USAGE: $0 [-hcs] [-a <adapter>] [-d <rate>] [-u <rate>] [-b <ifb adapter>]
 
 Limit the bandwidth of an adapter
 
 OPTIONS:
-   -h           Show this message
-   -a <adapter> Set the adpter
-   -d <rate>    Set maximum download rate (in Kbps) and/or
-   -u <rate>    Set maximum upload rate (in Kbps)
-   -p           Use presets in /etc/conf.d/wondershaper.conf
-   -c           Clear the limits from adapter
-   -s           Show the current status of adapter
-   -v           Show the current version
+   -h                Show this message
+   -a <adapter>      Set the adpter
+   -b <ifb adapter>  Set the ifb adapter with 'ifb' prefix (e.g. ifb0, ifb1 ...)
+   -d <rate>         Set maximum download rate (in Kbps) and/or (should be used with -b)
+   -u <rate>         Set maximum upload rate (in Kbps)
+   -p                Use presets in /etc/conf.d/wondershaper.conf
+   -c                Clear the limits from adapter
+   -s                Show the current status of adapter
+   -v                Show the current version
 
 MODES:
-   wondershaper -a <adapter> -d <rate> -u <rate>
-   wondershaper -c -a <adapter>
+   wondershaper -a <adapter> -d <rate> -u <rate> -b <ifb adapter>
+   wondershaper -c -a <adapter> [-b <ifb adapter>]
    wondershaper -s -a <adapter>
 
 EXAMPLES:
-   wondershaper -a eth0 -d 1024 -u 512
+   wondershaper -a eth0 -d 1024 -u 512 -b ifb0
    wondershaper -a eth0 -u 512
    wondershaper -c -a eth0
 
@@ -49,10 +50,10 @@ EOF
 DSPEED=
 USPEED=
 IFACE=
-IFB="ifb0"
+IFB=
 MODE=
 
-while getopts hvd:u:a:pcs o
+while getopts hvd:u:a:b:pcs o
 do	case "$o" in
 	h)	usage
 		exit 1;;
@@ -61,6 +62,7 @@ do	case "$o" in
 	d)	DSPEED=$OPTARG;;
 	u)      USPEED=$OPTARG;;
 	a)      IFACE=$OPTARG;;
+	b)      IFB=$OPTARG;;
 	p)      MODE="presets";;
 	c)      MODE="clear";;
 	s)      MODE="status";;
@@ -225,7 +227,8 @@ if [[ ! -z $DSPEED ]]
 then
 
     # Add the IFB interface
-    modprobe ifb numifbs=1
+    # Only have 2 interfaces
+    modprobe ifb numifbs=2
     ip link set dev $IFB up
 
     # Redirect ingress (incoming) to egress ifb0
